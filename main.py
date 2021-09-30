@@ -5,7 +5,7 @@ import requests
 import send_mail
 from lxml import etree
 
-URL = 'https://book.qidian.com/info/1027669580/#Catalog'  # 目录url
+URL = 'https://book.qidian.com/info/1027368101/#Catalog'  # 目录url
 
 
 def get_page(url):
@@ -37,6 +37,8 @@ def check():
 
 def main():
     html = get_page(URL)
+    # 小说名称
+    novel = html.xpath('//title/text()')[0][:10]
     # 章节名称
     chapters = html.xpath('//ul[@class="cf"]/li/a/text()')
     # 章节link
@@ -48,22 +50,21 @@ def main():
     newest_index = total_current - 1  # 索引
     # 邮件内容
     content = ''.join(get_chapter_content(newest_link))
-
     # json
     data = {
         "total_record": total_current,
-        "title": chapters[newest_index],
+        "title": novel + chapters[newest_index],
         "content": content + '...'
     }
 
     # 发送邮件
-    if not check() == total_current:    # 章节数目改变，即小说更新
-        send_mail.mail(chapters[newest_index], content)
+    if not check() == total_current:  # 章节数目改变，即小说更新
+        send_mail.mail(novel + ' ' + chapters[newest_index], content)
         # 记录
         save_to_json(data)
     # print(content)
     # print(chapters[newest_index])
-    print('-----------------------------------')
+    print (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
 
 if __name__ == '__main__':
