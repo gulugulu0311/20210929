@@ -1,6 +1,6 @@
 import json
 import time
-
+from threading import Timer
 import requests
 import send_mail
 from lxml import etree
@@ -41,6 +41,13 @@ def check(index_id):
             return 0
 
 
+class RepeatingTimer(Timer):
+    def run(self):
+        while not self.finished.is_set():
+            self.function(*self.args, **self.kwargs)
+            self.finished.wait(self.interval)
+
+
 def main():
     data = []  # 字典列表 change to json
     for item_url in get_url_list():
@@ -75,6 +82,5 @@ def main():
 
 
 if __name__ == '__main__':
-    while True:
-        main()
-        time.sleep(60)
+    timer = RepeatingTimer(30.0, main)
+    timer.start()
