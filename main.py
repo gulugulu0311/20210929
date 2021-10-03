@@ -3,7 +3,11 @@ import time
 from threading import Timer
 import requests
 import send_mail
+
 from lxml import etree
+import logging
+
+logging.captureWarnings(True)
 
 
 def get_url_list():
@@ -17,7 +21,7 @@ def get_page(novel_url):
                       'Chrome/93.0.4577.82 Safari/537.36 '
     }
 
-    res = requests.get(novel_url, headers=headers)
+    res = requests.get(novel_url, headers=headers, verify=False)
     res.encoding = 'utf-8'
     return etree.HTML(res.text)
 
@@ -54,7 +58,13 @@ def main():
         novel_id = item_url['id']
         html = get_page(item_url['url'])
         # 小说名称
-        novel = html.xpath('//div[@class="crumbs-nav center990  top-op"]/span/a/text()')[3]
+        try:
+            novel = html.xpath('//div[@class="crumbs-nav center990  top-op"]/span/a/text()')[3]
+        except IndexError as e:
+            print(e)
+            novel = '【章节名出现异常】'
+        finally:
+            pass
         # 章节名称
         chapters = html.xpath('//ul[@class="cf"]/li/a/text()')
         # 章节link
