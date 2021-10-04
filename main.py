@@ -57,35 +57,36 @@ def main():
     for item_url in get_url_list():
         novel_id = item_url['id']
         html = get_page(item_url['url'])
-        # 小说名称
+
         try:
-            novel = html.xpath('//div[@class="crumbs-nav center990  top-op"]/span/a/text()')[3]
+            # 小说名称
+            novel = html.xpath('//div[@class="crumbs-nav center990  top-op"]/span/a/text()')[-1]
+            # 章节名称
+            chapters = html.xpath('//ul[@class="cf"]/li/a/text()')
+            # 章节link
+            links = html.xpath('//ul[@class="cf"]/li/a/@href')
+            # 最新章节url
+            newest_link = 'https:' + links[-1]
+            # 当前更新章节总数
+            total_current = len(chapters)
+            # newest_index = total_current - 1  # 索引
+            # 邮件内容
+            content = '\n'.join(get_chapter_content(newest_link))
         except IndexError as e:
             print(e)
-            novel = '【章节名出现异常】'
         finally:
             pass
-        # 章节名称
-        chapters = html.xpath('//ul[@class="cf"]/li/a/text()')
-        # 章节link
-        links = html.xpath('//ul[@class="cf"]/li/a/@href')
-        # 最新章节url
-        newest_link = 'https:' + links[len(links) - 1]
-        # 当前更新章节总数
-        total_current = len(chapters)
-        newest_index = total_current - 1  # 索引
-        # 邮件内容
-        content = '\n'.join(get_chapter_content(newest_link))
+
         # json
         data.append({
             "total_record": total_current,
-            "title": novel + '\t' + chapters[newest_index],
+            "title": novel + '\t' + chapters[-1],
             "content": content + '...'
         })
 
         # 发送邮件
         if not check(novel_id) == total_current:  # 章节数目改变，即小说更新
-            send_mail.mail(novel + ' ' + chapters[newest_index], content)
+            send_mail.mail(novel + ' ' + chapters[-1], content)
     record_in_json(data)
 
     print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
